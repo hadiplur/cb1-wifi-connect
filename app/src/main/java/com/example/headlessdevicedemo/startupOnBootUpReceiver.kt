@@ -1,8 +1,8 @@
+package com.example.headlessdevicedemo
+
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-  
-package com.example.headlessdevicedemo
 
 class startupOnBootUpReceiver : BroadcastReceiver() {
   

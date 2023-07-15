@@ -27,10 +27,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="Can't wait to be on Internet!\nI'm also not supposed to have a screen..."
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            android:text="Can't wait to be on Internet!\nI'm also not supposed to have a screen..."/>
 
 </LinearLayout>
