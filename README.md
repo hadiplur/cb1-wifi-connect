@@ -1,4 +1,4 @@
-# CB1 WîFi Connect
+# CB1 WiFi Connect
 This Android App is shipped with the CB1 System Image.
 It allows the CB1 to be connected to a WiFi-Network without the user ever accessing the device.
 
