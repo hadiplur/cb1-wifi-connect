@@ -22,11 +22,12 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
+import android.net.wifi.p2p.WifiP2pManager.ActionListener
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import java.io.DataOutputStream
+import java.lang.reflect.InvocationTargetException
 
 
 const val TAG = "HEADLESS_ADVERTISER"
@@ -47,23 +48,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "Prepared View")
-        // Change WiFi Test goes here
-        /*
+
         Log.d(TAG, " started WIFI Connecting Advertising.")
-        val cmds = arrayOf("cmd wifi connect-network \"ssid\" wpa2 \"password\"")
-        val p = Runtime.getRuntime().exec("su")
-        val os = DataOutputStream(p.outputStream)
-        for (tmpCmd in cmds) {
-            os.writeBytes(tmpCmd + "\n")
-        }
-        os.writeBytes("exit\n")
-        os.flush()
-
-        Log.d(TAG, "WIFI Connection here? .")*/
-
         /*
-        Currently useless code...
-
+        //Currently useless code...
         // Headless device starts Advertising as soon as connected
         HeadlessWifiManager(applicationContext, APP_ID)
             .startAdvertising(object: AdvertisingCallback {
@@ -96,9 +84,13 @@ class MainActivity : AppCompatActivity() {
         // Indicates this device's details have changed.
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
 
+        // Indicates this device's descovery state has changed
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)
+
         Log.d(TAG, "Initializing Channel")
         manager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
         channel = manager.initialize(this, mainLooper, null)
+
 
         Log.d(TAG, "Starting Permission check")
         if (ActivityCompat.checkSelfPermission(
@@ -108,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         ) {
             Log.d(TAG, "Permissions ACCESS_FINE_LOCATION not available")
             // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
+            //    ActivityCompat#requestPermissions..............................
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
@@ -159,7 +151,7 @@ class MainActivity : AppCompatActivity() {
 
         Log.d(TAG, "Starting OnResume")
         super.onResume()
-        receiver = WiFiDirectBroadcastReceiver(manager, channel, IS_ADVERTISER,)
+        receiver = WiFiDirectBroadcastReceiver(manager, channel, IS_ADVERTISER)
         registerReceiver(receiver, intentFilter)
         Log.d(TAG, "Starting OnResume Successful")
     }
