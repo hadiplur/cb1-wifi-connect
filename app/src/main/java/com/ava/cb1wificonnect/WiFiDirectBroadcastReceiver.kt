@@ -267,49 +267,6 @@ class WiFiDirectBroadcastReceiver(
             } else {
                 Log.d(TAG, "Socket already started, not starting another connection for now")
             }
-        } else if (info.groupFormed) {
-            // The other device acts as the peer (client). In this case,
-            // you'll want to create a peer thread that connects
-            // to the group owner.
-            Log.d(TAG, "Group Formed, is Group Memeber");
-
-            if (!socketStarted) {
-                Log.d(TAG, "Starting a Network Thread")
-                socketStarted = true
-                Log.d(TAG, "Block other Socket Connection Attempts")
-                val thread = Thread {
-                    try {
-
-                        Log.d(TAG, "Socket Start Procedure")
-                        var socket = Socket()
-                        socket.bind(null)
-                        socket.connect(InetSocketAddress(info.groupOwnerAddress, port), 500)
-                        Log.d(TAG, "Connected to host")
-
-                        Log.d(TAG, "Socket isConnected = ${socket.isConnected}")
-
-                        var output = PrintWriter(socket.getOutputStream())
-                        var input = BufferedReader(InputStreamReader(socket.getInputStream()))
-
-                        output.println("ssid")
-                        output.flush()
-
-                        Log.d(TAG, "Flushed SSID")
-                        Thread.sleep(500)
-                        output.println("password")
-                        output.flush()
-
-                        Log.d(TAG, "Flushed Messages")
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                thread.start()
-            } else {
-                Log.d(TAG, "Socket already started, not starting another connection for now")
-            }
-
-
         }
     }
 

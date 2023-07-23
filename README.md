@@ -52,6 +52,55 @@ output.flush()
 Log.d(TAG, "Flushed Messages")
 ```
 
+## Permissions and WiFi Connection
+
+For this app to run, it has to be a system app.
+This is due to the fact that the Android API has changed in Android 10.
+Therefore WiFi Connections can not be initiated without user confirmation.
+
+To work around this, this app uses shell commands to establish a connection.
+The used shell command looks as follows:
+
+```linux
+cmd wifi connect-network "SSID" wpa2 "Password"
+```
+
+To test if the permissions are right without executing the whole app, pls. use this ADB Command:
+
+```shell
+adb shell
+cmd wifi connect-network "SSID" wpa2 "Password"
+```
+
+### Set the permissions correctly
+
+In some cases we have to set the permissions manually.
+This can be due to testing, or other circumstances.
+In any case you can do the following to set the permissions:
+
+```shell
+adb shell
+su
+cd /data/user/0/
+chmod 751 com.ava.cb1wificonnect
+chown system com.ava.cb1wificonnect
+chgrp system com.ava.cb1wificonnect
+```
+
+Then check the permissions using
+
+```shell
+ls -l
+```
+
+It should now show as follows:
+
+```shell
+rwxr-x--x system system com.ava.cb1wificonnect
+```
+
+Congratulations, you just elevated the CB1 WiFi Connect App to a System App!
+
 ## Logging & Debugging
 
 This application is rather cumbersome to debug, here are some tips to make things a little easier:
@@ -102,13 +151,13 @@ Also keep in mind this application is out there released on CB1s, so make sure y
 * create a Tag and a Release for each version
 * Make sure the Release Versions are documented with *ALL* changes (to be able to maintain backward compatibility)
 
+## How to release this app?
+
+- TBD
+
 ## Contributors
 
 A list of all Contributors sorted by Versions
 
 ### V1.0.0
 - [Michael J. Lopez](https://github.com/Michu44) - Design & Architecture & Coding
-
-## How to release this app?
-
-- TBD
