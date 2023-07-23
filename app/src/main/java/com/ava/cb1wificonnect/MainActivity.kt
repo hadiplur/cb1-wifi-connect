@@ -6,16 +6,14 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
-import android.net.wifi.p2p.WifiP2pManager.ActionListener
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import java.lang.reflect.InvocationTargetException
 
 
 const val TAG = "CB1_WIFI_ADVERTISER"
-const val APP_ID = "headless_device_demo"
+const val APP_ID = "cb1_wifi_advertiser"
 private val intentFilter = IntentFilter()
 lateinit var channel: WifiP2pManager.Channel
 lateinit var manager: WifiP2pManager

@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         maven { url "https://www.jitpack.io" }
     }
 }
-rootProject.name = "headless device demo"
+rootProject.name = "CB1 WiFi Connect"
 include ':app'
