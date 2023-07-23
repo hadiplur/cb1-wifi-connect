@@ -101,6 +101,11 @@ rwxr-x--x system system com.ava.cb1wificonnect
 
 Congratulations, you just elevated the CB1 WiFi Connect App to a System App!
 
+### Location Services
+
+This app uses the Android Location Services, make sure these are Turned on.
+Also make sure that the App has permission to use Location Services.x
+
 ## Logging & Debugging
 
 This application is rather cumbersome to debug, here are some tips to make things a little easier:
