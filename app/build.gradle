@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.headlessdevicedemo'
+    namespace 'com.ava.cb1wificonnect'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.headlessdevicedemo"
+        applicationId "com.ava.cb1wificonnect"
         minSdk 21
         targetSdk 33
         versionCode 1

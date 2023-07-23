@@ -1,4 +1,4 @@
-package com.example.headlessdevicedemo
+package com.ava.cb1wificonnect
 
 import android.content.BroadcastReceiver
 import android.content.Context

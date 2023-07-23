@@ -1,4 +1,4 @@
-package com.example.headlessdevicedemo
+package com.ava.cb1wificonnect
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -42,8 +42,7 @@ class WiFiDirectBroadcastReceiver(
         if (intent != null) {
             when(intent.action) {
                 WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
-                    // Determine if Wi-Fi Direct mode is enabled or not, alert
-                    // the Activity.
+                    // Determine if Wi-Fi Direct mode is enabled or not
                     Log.d(TAG, "WIFI State Changed")
                     val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
                     Log.d(TAG, "WIFI State Changed to: $state")
@@ -52,14 +51,17 @@ class WiFiDirectBroadcastReceiver(
                 }
                 WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
 
-                    // The peer list has changed! We should probably do something about
-                    // that.
+                    // The peer list has changed!
+                    // We should probably do something about that.
                     Log.d(TAG, "P2P peers changed")
                     manager.requestPeers(channel, peerListListener)
                     Log.d(TAG, "P2P peers changed: requestPeers done")
 
                 }
                 WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
+
+                    // Connection state changed! We should probably do something about
+                    // that.
 
                     Log.d(TAG, "onReceive: connection changed")
                     if (manager != null) {
@@ -77,20 +79,9 @@ class WiFiDirectBroadcastReceiver(
                             }
                         }
                     }
-                    // Connection state changed! We should probably do something about
-                    // that.
 
                 }
                 WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
-                    /*
-                    (activity.supportFragmentManager.findFragmentById(R.id.frag_list) as DeviceListFragment)
-                        .apply {
-                            updateThisDevice(
-                                intent.getParcelableExtra(
-                                    WifiP2pManager.EXTRA_WIFI_P2P_DEVICE) as WifiP2pDevice
-                            )
-                        }*/
-
                     Log.d(TAG, "P2P this device changed")
                 }
                 WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION -> {
@@ -111,15 +102,12 @@ class WiFiDirectBroadcastReceiver(
                                     // No services have actually been discovered yet, so this method
                                     // can often be left blank. Code for peer discovery goes in the
                                     // onReceive method, detailed below.
-
                                     Log.d(TAG, "Started Peer Discovery Successful")
                                 }
 
                                 override fun onFailure(reasonCode: Int) {
                                     // Code for when the discovery initiation fails goes here.
                                     // Alert the user that something went wrong.
-
-
                                     Log.d(TAG, "Failed Peer Discovery Initiation")
                                 }
                             })
@@ -193,7 +181,7 @@ class WiFiDirectBroadcastReceiver(
                     // and unable to service the request
                     Log.d(TAG, "Service is busy, retry later")
                 }
-                Log.d(TAG, "Reallow Connections")
+                Log.d(TAG, "Re-allow Connections")
                 connectionTryStarted = false
                 Log.d(TAG, "Connection try started set to false")
             }
