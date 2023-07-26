@@ -4,14 +4,18 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
+import android.net.wifi.p2p.WifiP2pConfig.GROUP_OWNER_INTENT_MAX
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.net.wifi.p2p.WifiP2pManager.BUSY
 import android.net.wifi.p2p.WifiP2pManager.CONNECTION_REQUEST_DEFER_TO_SERVICE
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.getSystemService
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -27,7 +31,8 @@ import kotlin.concurrent.thread
 class WiFiDirectBroadcastReceiver(
     manager: WifiP2pManager,
     channel: WifiP2pManager.Channel,
-    advertiserMode: Boolean
+    advertiserMode: Boolean,
+    activity: MainActivity
 ) : BroadcastReceiver() {
 
     private val peers = mutableListOf<WifiP2pDevice>()
@@ -36,6 +41,7 @@ class WiFiDirectBroadcastReceiver(
     private val port = 13133
     private var ssidSent = false
     private var passwordSent = false
+    private var securityTypeSent = false
 
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -94,25 +100,32 @@ class WiFiDirectBroadcastReceiver(
                             // Wifi P2P discovery stopped.
                             // Do what you want to do when discovery stopped
                             Log.d(TAG, "Wifi P2P discovery stopped.")
-                            Log.d(TAG, "Trying to Restart WiFi P2P discovery...")
-                            manager.discoverPeers(channel, object : WifiP2pManager.ActionListener {
 
-                                override fun onSuccess() {
-                                    // Code for when the discovery initiation is successful goes here.
-                                    // No services have actually been discovered yet, so this method
-                                    // can often be left blank. Code for peer discovery goes in the
-                                    // onReceive method, detailed below.
-                                    Log.d(TAG, "Started Peer Discovery Successful")
-                                }
+                            if (IS_WIFI_CONNECTED) {
+                                // Do whatever
+                                Log.d(TAG, "WiFi is Connected... no action required")
+                            } else {
+                                Log.d(TAG, "Trying to Restart WiFi P2P discovery...")
+                                manager.discoverPeers(
+                                    channel,
+                                    object : WifiP2pManager.ActionListener {
 
-                                override fun onFailure(reasonCode: Int) {
-                                    // Code for when the discovery initiation fails goes here.
-                                    // Alert the user that something went wrong.
-                                    Log.d(TAG, "Failed Peer Discovery Initiation")
-                                }
-                            })
-                            Log.d(TAG, "Restart WiFi P2P discovery command sent...")
+                                        override fun onSuccess() {
+                                            // Code for when the discovery initiation is successful goes here.
+                                            // No services have actually been discovered yet, so this method
+                                            // can often be left blank. Code for peer discovery goes in the
+                                            // onReceive method, detailed below.
+                                            Log.d(TAG, "Started Peer Discovery Successful")
+                                        }
 
+                                        override fun onFailure(reasonCode: Int) {
+                                            // Code for when the discovery initiation fails goes here.
+                                            // Alert the user that something went wrong.
+                                            Log.d(TAG, "Failed Peer Discovery Initiation")
+                                        }
+                                    })
+                                Log.d(TAG, "Restart WiFi P2P discovery command sent...")
+                            }
                         }
 
                 }
@@ -154,38 +167,41 @@ class WiFiDirectBroadcastReceiver(
     @SuppressLint("MissingPermission")
     fun connect(peer : WifiP2pDevice) {
         Log.d(TAG, "Trying to setup Connection")
-        connectionTryStarted = true
         Log.d(TAG, "block other connection attempts")
         val config = WifiP2pConfig().apply {
             deviceAddress = peer.deviceAddress
             wps.setup = WpsInfo.PBC
+            groupOwnerIntent = GROUP_OWNER_INTENT_MAX
         }
-        manager.connect(channel, config, object : WifiP2pManager.ActionListener {
 
-            override fun onSuccess() {
-                Log.d(TAG, "Connection Succeeded")
+        if (!connectionTryStarted) {
+            manager.connect(channel, config, object : WifiP2pManager.ActionListener {
 
-            }
-
-            override fun onFailure(reason: Int) {
-                Log.d(TAG, "Connection Failed $reason")
-                if (reason == CONNECTION_REQUEST_DEFER_TO_SERVICE) {
-                    // REASON: Defer the decision back to the Wi-Fi service
-                    // (which will display a dialog to the user)
-
-                    Log.d(TAG, "User must first allow the connection")
+                override fun onSuccess() {
+                    Log.d(TAG, "Connection Succeeded")
+                    connectionTryStarted = true
                 }
 
-                if (reason == BUSY) {
-                    // Indicates that the operation failed because the framework is busy
-                    // and unable to service the request
-                    Log.d(TAG, "Service is busy, retry later")
+                override fun onFailure(reason: Int) {
+                    Log.d(TAG, "Connection Failed $reason")
+                    if (reason == CONNECTION_REQUEST_DEFER_TO_SERVICE) {
+                        // REASON: Defer the decision back to the Wi-Fi service
+                        // (which will display a dialog to the user)
+
+                        Log.d(TAG, "User must first allow the connection")
+                    }
+
+                    if (reason == BUSY) {
+                        // Indicates that the operation failed because the framework is busy
+                        // and unable to service the request
+                        Log.d(TAG, "Service is busy, retry later")
+                    }
+                    Log.d(TAG, "Re-allow Connections")
+                    connectionTryStarted = false
+                    Log.d(TAG, "Connection try started set to false")
                 }
-                Log.d(TAG, "Re-allow Connections")
-                connectionTryStarted = false
-                Log.d(TAG, "Connection try started set to false")
-            }
-        })
+            })
+        }
     }
 
     private val connectionListener = WifiP2pManager.ConnectionInfoListener { info ->
@@ -219,10 +235,11 @@ class WiFiDirectBroadcastReceiver(
 
                         var ssid = ""
                         var password = ""
+                        var sec = ""
 
                         Log.d(TAG, "Socket isConnected = ${socket.isConnected}")
 
-                        while (!passwordSent) {
+                        while (!securityTypeSent) {
                             Log.d(TAG, "Waiting for messages")
                             try {
                                 var message = input.readLine();
@@ -236,6 +253,10 @@ class WiFiDirectBroadcastReceiver(
                                         password = message
                                         passwordSent = true
                                         Log.d(TAG, "Password: $password")
+                                    } else if (!securityTypeSent) {
+                                        sec = message
+                                        securityTypeSent = true
+                                        Log.d(TAG, "Security Type: $sec")
                                     }
                                 } else {
                                     Log.d(TAG, "no message received")
@@ -245,8 +266,25 @@ class WiFiDirectBroadcastReceiver(
                             }
                         }
 
-                        if (passwordSent && ssidSent) {
-                            val cmds = arrayOf("cmd wifi connect-network \"$ssid\" wpa2 \"$password\"")
+                        socket.close()
+                        Log.d(TAG, "Closed Socket")
+
+                        Log.d(TAG, "Trying to close Group")
+
+                        manager.removeGroup(channel, object : WifiP2pManager.ActionListener {
+
+                            override fun onSuccess() {
+                                Log.d(TAG, "Connection closed Succeeded")
+
+                            }
+
+                            override fun onFailure(reason: Int) {
+                                Log.d(TAG, "Connection closed Failed $reason")
+                            }
+                        })
+
+                        if (passwordSent && ssidSent && securityTypeSent) {
+                            val cmds = arrayOf("cmd wifi connect-network \"$ssid\" $sec \"$password\"")
                             val p = Runtime.getRuntime().exec("su")
                             val os = DataOutputStream(p.outputStream)
                             for (tmpCmd in cmds) {
@@ -256,10 +294,28 @@ class WiFiDirectBroadcastReceiver(
                             os.flush()
 
                             Log.d(TAG, "WIFI Connection here? .")
+
+
+                            connectionTryStarted = false
+                            socketStarted = false
+                            ssidSent = false
+                            passwordSent = false
+                            securityTypeSent = false
+
+                            Thread.sleep(10000)
+
+                            Log.d(TAG, "Check Connection.")
+                            activity.checkConnectivity()
+                            if (!IS_WIFI_CONNECTED) {
+                                activity.discoverPeers()
+                            } else {
+                                activity.checkForLostConnectivity()
+                            }
                         }
 
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        Log.d(TAG, "Error message: ${e.message}")
                     }
                 }
 

@@ -1,9 +1,11 @@
 package com.ava.cb1wificonnect
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
@@ -18,6 +20,7 @@ private val intentFilter = IntentFilter()
 lateinit var channel: WifiP2pManager.Channel
 lateinit var manager: WifiP2pManager
 const val IS_ADVERTISER: Boolean = true
+public var IS_WIFI_CONNECTED = false;
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,30 +33,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "Prepared View")
-
-        Log.d(TAG, " started WIFI Connecting Advertising.")
-        /*
-        //Currently useless code...
-        // Headless device starts Advertising as soon as connected
-        HeadlessWifiManager(applicationContext, APP_ID)
-            .startAdvertising(object: AdvertisingCallback {
-
-                override fun onAdvertisingStarted() {
-                    Log.d(TAG, "Successfully started Advertising.")
-                }
-
-                override fun onError(e: Exception) {
-                    Log.e(TAG, "Procedure failed")
-                    e.printStackTrace()
-                }
-
-                override fun onSuccess() {
-                    Log.d(TAG, "Successfully connected to Wifi.")
-                }
-        })
-        */
-
-        Log.d(TAG, "Starting Wifi Manager")
         // Indicates a change in the Wi-Fi Direct status.
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
 
@@ -107,34 +86,22 @@ class MainActivity : AppCompatActivity() {
             //return
         }
         Log.d(TAG, "Starting Peer Discovery.")
-        manager.discoverPeers(channel, object : WifiP2pManager.ActionListener {
-
-            override fun onSuccess() {
-                // Code for when the discovery initiation is successful goes here.
-                // No services have actually been discovered yet, so this method
-                // can often be left blank. Code for peer discovery goes in the
-                // onReceive method, detailed below.
-
-                Log.d(TAG, "Started Peer Discovery Successful")
-            }
-
-            override fun onFailure(reasonCode: Int) {
-                // Code for when the discovery initiation fails goes here.
-                // Alert the user that something went wrong.
-
-                Log.d(TAG, "Failed Peer Discovery Initiation")
-            }
-        })
-
-
+        checkConnectivity()
+        if (!IS_WIFI_CONNECTED) {
+            discoverPeers()
+        } else (
+            checkForLostConnectivity()
+        )
     }
 
     public override fun onResume() {
 
         Log.d(TAG, "Starting OnResume")
         super.onResume()
-        receiver = WiFiDirectBroadcastReceiver(manager, channel, IS_ADVERTISER)
-        registerReceiver(receiver, intentFilter)
+        checkConnectivity()
+        if (!IS_WIFI_CONNECTED) {
+            startReceiver()
+        }
         Log.d(TAG, "Starting OnResume Successful")
     }
 
@@ -145,4 +112,57 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Starting OnPause Successful")
     }
 
+    @SuppressLint("MissingPermission")
+    fun checkConnectivity() {
+        val connManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        @Suppress("DEPRECATION") val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+
+        @Suppress("DEPRECATION")
+        if (mWifi!!.isConnected) {
+            // Do whatever
+            Log.d(TAG, "WiFi is Connected... no action required")
+            IS_WIFI_CONNECTED = true
+        } else {
+            Log.d(TAG, "WiFi is NOT Connected... ")
+            IS_WIFI_CONNECTED = false
+        }
+    }
+
+    fun checkForLostConnectivity(){
+        checkConnectivity()
+        if (!IS_WIFI_CONNECTED) {
+            startReceiver()
+        } else {
+            Thread.sleep(60000)
+            checkForLostConnectivity()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun discoverPeers() {
+        manager.discoverPeers(
+            channel,
+            object : WifiP2pManager.ActionListener {
+
+                override fun onSuccess() {
+                    // Code for when the discovery initiation is successful goes here.
+                    // No services have actually been discovered yet, so this method
+                    // can often be left blank. Code for peer discovery goes in the
+                    // onReceive method, detailed below.
+                    Log.d(TAG, "Started Peer Discovery Successful")
+                }
+
+                override fun onFailure(reasonCode: Int) {
+                    // Code for when the discovery initiation fails goes here.
+                    // Alert the user that something went wrong.
+                    Log.d(TAG, "Failed Peer Discovery Initiation")
+                }
+            })
+    }
+
+    fun startReceiver() {
+        receiver = WiFiDirectBroadcastReceiver(manager, channel, IS_ADVERTISER, this)
+        registerReceiver(receiver, intentFilter)
+        Log.d(TAG, "Discover Peers...")
+    }
 }
