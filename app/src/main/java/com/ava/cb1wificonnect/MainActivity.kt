@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import java.lang.Exception
 
 
 const val TAG = "CB1_WIFI_ADVERTISER"
@@ -90,9 +91,17 @@ class MainActivity : AppCompatActivity() {
         checkConnectivity()
         if (!IS_WIFI_CONNECTED && !IS_ETHERNET_CONNECTED) {
             discoverPeers()
-        } else (
-            checkForLostConnectivity()
-        )
+        } else {
+            val thread = Thread {
+                try {
+                    checkForLostConnectivity()
+                } catch (e: Exception) {
+                    Log.d(TAG, "Error: ${e.message}")
+                }
+            }
+
+            thread.start()
+        }
     }
 
     public override fun onResume() {
