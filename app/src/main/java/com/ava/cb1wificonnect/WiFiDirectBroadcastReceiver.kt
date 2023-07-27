@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
@@ -14,19 +13,11 @@ import android.net.wifi.p2p.WifiP2pManager
 import android.net.wifi.p2p.WifiP2pManager.BUSY
 import android.net.wifi.p2p.WifiP2pManager.CONNECTION_REQUEST_DEFER_TO_SERVICE
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat.getSystemService
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
 import java.io.BufferedReader
-import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.InputStreamReader
 import java.io.PrintWriter
-import java.net.InetSocketAddress
 import java.net.ServerSocket
-import java.net.Socket
-import kotlin.concurrent.thread
 
 class WiFiDirectBroadcastReceiver(
     manager: WifiP2pManager,
@@ -42,6 +33,7 @@ class WiFiDirectBroadcastReceiver(
     private var ssidSent = false
     private var passwordSent = false
     private var securityTypeSent = false
+    private var activityRef = activity
 
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -101,11 +93,16 @@ class WiFiDirectBroadcastReceiver(
                             // Do what you want to do when discovery stopped
                             Log.d(TAG, "Wifi P2P discovery stopped.")
 
+                            activityRef.checkConnectivity()
                             if (IS_WIFI_CONNECTED) {
                                 // Do whatever
                                 Log.d(TAG, "WiFi is Connected... no action required")
+                            } else if (IS_ETHERNET_CONNECTED) {
+                                // Do whatever
+                                Log.d(TAG, "Ethernet is Connected... no action required")
                             } else {
                                 Log.d(TAG, "Trying to Restart WiFi P2P discovery...")
+                                /*
                                 manager.discoverPeers(
                                     channel,
                                     object : WifiP2pManager.ActionListener {
@@ -123,7 +120,8 @@ class WiFiDirectBroadcastReceiver(
                                             // Alert the user that something went wrong.
                                             Log.d(TAG, "Failed Peer Discovery Initiation")
                                         }
-                                    })
+                                    })*/
+                                activityRef.discoverPeers()
                                 Log.d(TAG, "Restart WiFi P2P discovery command sent...")
                             }
                         }
@@ -149,7 +147,8 @@ class WiFiDirectBroadcastReceiver(
 
                 if (peer.deviceName == "AVA RX2" ||
                     peer.deviceName == "AVA RX2 manual" ||
-                    peer.deviceName == "AVA-RM-RX2") {
+                    peer.deviceName == "AVA-RM-RX2" ||
+                    peer.deviceName == "AVA-RM-RX1") {
 
                     Log.d(TAG, "AVA RX2 discovered")
                     if (advertiserMode && !connectionTryStarted) {
@@ -306,7 +305,7 @@ class WiFiDirectBroadcastReceiver(
 
                             Log.d(TAG, "Check Connection.")
                             activity.checkConnectivity()
-                            if (!IS_WIFI_CONNECTED) {
+                            if (!IS_WIFI_CONNECTED && !IS_ETHERNET_CONNECTED) {
                                 activity.discoverPeers()
                             } else {
                                 activity.checkForLostConnectivity()

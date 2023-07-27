@@ -21,6 +21,7 @@ lateinit var channel: WifiP2pManager.Channel
 lateinit var manager: WifiP2pManager
 const val IS_ADVERTISER: Boolean = true
 public var IS_WIFI_CONNECTED = false;
+public var IS_ETHERNET_CONNECTED = false;
 
 class MainActivity : AppCompatActivity() {
 
@@ -45,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         // Indicates this device's details have changed.
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
 
-        // Indicates this device's descovery state has changed
+        // Indicates this device's discovery state has changed
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)
 
         Log.d(TAG, "Initializing Channel")
@@ -87,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d(TAG, "Starting Peer Discovery.")
         checkConnectivity()
-        if (!IS_WIFI_CONNECTED) {
+        if (!IS_WIFI_CONNECTED && !IS_ETHERNET_CONNECTED) {
             discoverPeers()
         } else (
             checkForLostConnectivity()
@@ -99,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Starting OnResume")
         super.onResume()
         checkConnectivity()
-        if (!IS_WIFI_CONNECTED) {
+        if (!IS_WIFI_CONNECTED && !IS_ETHERNET_CONNECTED) {
             startReceiver()
         }
         Log.d(TAG, "Starting OnResume Successful")
@@ -116,21 +117,28 @@ class MainActivity : AppCompatActivity() {
     fun checkConnectivity() {
         val connManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         @Suppress("DEPRECATION") val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+        @Suppress("DEPRECATION") val mEthernet = connManager.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET)
+
 
         @Suppress("DEPRECATION")
         if (mWifi!!.isConnected) {
             // Do whatever
             Log.d(TAG, "WiFi is Connected... no action required")
             IS_WIFI_CONNECTED = true
+        } else if (mEthernet!!.isConnected) {
+            Log.d(TAG, "Ethernet is Connected... no action required")
+            IS_ETHERNET_CONNECTED = true
         } else {
-            Log.d(TAG, "WiFi is NOT Connected... ")
+            Log.d(TAG, "WiFi & Ethernet is NOT Connected... ")
             IS_WIFI_CONNECTED = false
+            IS_ETHERNET_CONNECTED = false
         }
     }
 
     fun checkForLostConnectivity(){
         checkConnectivity()
-        if (!IS_WIFI_CONNECTED) {
+        if (!IS_WIFI_CONNECTED && !IS_ETHERNET_CONNECTED) {
+            Log.d(TAG, "Start Receiver again")
             startReceiver()
         } else {
             Thread.sleep(60000)
